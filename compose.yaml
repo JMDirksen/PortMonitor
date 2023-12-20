@@ -1,0 +1,9 @@
+services:
+  portmonitor:
+    image: jmdirksen/portmonitor
+    environment:
+      PORT_LIST: example.com:80 example.com:443
+      INTERVAL: 300
+      TIMEOUT: 3
+      NTFY_TOPIC: PortMonitor
+    restart: unless-stopped
