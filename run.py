@@ -4,9 +4,9 @@ import requests
 import time
 
 PORT_LIST = os.getenv('PORT_LIST') or "example.com:80 example.com:443"
-TIMEOUT = int(os.getenv('TIMEOUT')) or 3
-INTERVAL = int(os.getenv('INTERVAL')) or 300
-INTERVAL_ON_ERROR = int(os.getenv('INTERVAL_ON_ERROR')) or 10
+TIMEOUT = int(os.getenv('TIMEOUT') or 3)
+INTERVAL = int(os.getenv('INTERVAL') or 300)
+INTERVAL_ON_ERROR = int(os.getenv('INTERVAL_ON_ERROR') or 10)
 NTFY_TOPIC = os.getenv('NTFY_TOPIC') or "PortMonitor"
 
 
@@ -21,13 +21,13 @@ def main():
             if checkPort(check['address'], check['port']):
                 if not check['status']:
                     check['status'] = True
-                    send_notification(f"OK: {portString}")
+                    send_notification("OK", portString)
                 print("OK", flush=True)
             else:
                 errors = True
                 if check['status']:
                     check['status'] = False
-                    send_notification(f"Error: {portString}")
+                    send_notification("Error", portString, True)
                 print("ERROR", flush=True)
         if errors:
             time.sleep(INTERVAL_ON_ERROR)
@@ -35,10 +35,18 @@ def main():
             time.sleep(INTERVAL)
 
 
-def send_notification(message: str):
+def send_notification(title: str, message: str, warning: bool = False):
+    prio = "3"
+    tag = "+1"
+    if warning:
+        prio = "5"
+        tag = "warning"
     try:
         requests.post(
-            f"https://ntfy.sh/{NTFY_TOPIC}", data=message)
+            f"https://ntfy.sh/{NTFY_TOPIC}",
+            data=message,
+            headers={ "Title": title, "Priority": prio, "Tags": tag }
+        )
     except Exception as e:
         print(e, end=" ")
 
