@@ -9,5 +9,6 @@ Variable | Default value | Description
 --|--|--
 PORT_LIST | example.com:80 example.com:443 | A space delimited list of host:port strings
 INTERVAL | 300 | The interval in seconds before testing the ports again
+INTERVAL_ON_ERROR | 10 | The interval in seconds before testing the ports again when there has been an error during last checks
 TIMEOUT | 3 | Number of seconds to wait for a connection to be made
 NTFY_TOPIC | PortMonitor | The [ntfy topic](https://docs.ntfy.sh/?h=topic#step-1-get-the-app) to send the push notifications to

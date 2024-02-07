@@ -9,6 +9,7 @@ COPY . .
 
 ENV PORT_LIST="example.com:80 example.com:443"
 ENV INTERVAL=300
+ENV INTERVAL_ON_ERROR=10
 ENV TIMEOUT=3
 ENV NTFY_TOPIC="PortMonitor"
 
