@@ -20,9 +20,9 @@ def main():
             print(f"> {port['string']} ... ", end="", flush=True)
             if checkPort(port['address'], port['port']):
                 print("OK", flush=True)
-                if port['error_count']:
-                    port['error_count'] = 0
+                if port['error_count'] >= NOTIFY_ERROR_COUNT:
                     send_notification("OK", port['string'])
+                port['error_count'] = 0
             else:
                 errors = True
                 port['error_count'] += 1
