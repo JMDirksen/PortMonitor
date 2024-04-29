@@ -2,6 +2,7 @@ import os
 import socket
 import requests
 import time
+import json
 
 # Get/set environment variables / defaults
 PORT_LIST = os.getenv('PORT_LIST') or "example.com:80 example.com:443"
@@ -14,24 +15,51 @@ NTFY_TOPIC = os.getenv('NTFY_TOPIC') or "PortMonitor"
 def main():
     ports = ports_to_list(PORT_LIST)
 
+    # Load uptimes
+    uptime = {}
+    if os.path.exists("uptime.json"):
+        with open("uptime.json", "r") as file:
+            uptime = json.load(file)
+    uptimeSamples = 30*24*60*60 / INTERVAL
+
     while True:
         for port in ports:
             print(f"> {port['string']} ... ", end="", flush=True)
+
+            # Get uptime
+            if port['string'] in uptime:
+                currentUptime = float(uptime[port['string']])
+            else:
+                currentUptime = 1.0
+
             # Check port
             if checkPort(port['address'], port['port']):
                 # OK
-                print("OK", flush=True)
+                newUptime = ( currentUptime * ( uptimeSamples - 1 ) + 1 ) / uptimeSamples
+                uptime[port['string']] = newUptime
+
+                # Output / notification
+                print(f"OK ({str(round(newUptime*100, 3))}%)", flush=True)
                 if port['error_count'] >= NOTIFY_ERROR_COUNT:
                     # Notify back from Error to OK
-                    send_notification("OK", port['string'])
+                    send_notification("OK", f"{port['string']} ({str(round(newUptime*100, 3))}%)")
                 port['error_count'] = 0
             else:
                 # Error
                 port['error_count'] += 1
-                print(f"ERROR {port['error_count']}", flush=True)
+                newUptime = currentUptime * ( uptimeSamples - 1 ) / uptimeSamples
+                uptime[port['string']] = newUptime
+
+                # Output / notification
+                print(f"ERROR {port['error_count']} ({str(round(newUptime*100, 3))}%)", flush=True)
                 if port['error_count'] == NOTIFY_ERROR_COUNT:
                     # Notify Error
-                    send_notification("Error", port['string'], True)
+                    send_notification("Error", f"{port['string']} ({str(round(newUptime*100, 3))}%)", True)
+
+        # Save uptimes
+        with open("uptime.json", "w") as file:
+            json.dump(uptime, file)
+        
         time.sleep(INTERVAL)
 
 
